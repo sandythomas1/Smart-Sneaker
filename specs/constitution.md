@@ -24,10 +24,9 @@ Durable engineering principles for this project. Unlike specs (which describe on
 
 ## Testing Bar
 - Unit tests are mandatory for new logic; prefer testing behavior over implementation detail.
-- Test framework: <!-- detected: none — no code exists yet. Pick the idiomatic default per tier when
-  that tier's first spec is implemented (e.g. a C/C++ unit test framework for firmware, the mobile
-  framework's native test runner for the client app, the cloud runtime's idiomatic test framework
-  for backend services). Record the actual choice here once made. -->
+- Test framework: **Jest** for the client app, cloud services, and shared packages (decided during
+  `/spec-decompose 001` — see `specs/memory/decisions.md`). Firmware tier's framework is still TBD,
+  chosen when the firmware spec is implemented (a C/C++ unit test framework, not Jest).
 - Coverage expectations: TBD — fill in when the user states a preference.
 - Signal-processing / ML-adjacent logic (gait segmentation, insight computation) additionally needs
   validation against recorded or synthetic ground-truth data, not just unit tests of code paths.
@@ -42,13 +41,14 @@ Durable engineering principles for this project. Unlike specs (which describe on
 - <!-- Fill in further decisions as they're made — record them here via /spec-retro, not by guessing now -->
 
 ## Tech Stack
-<!-- detected: no manifest files exist yet (no package.json/pyproject.toml/go.mod/etc.) — this
-     project is pre-code, planning-stage. Stack below is inferred from
-     specs/smart-sneaker-platform/spec.md and the architecture diagrams; confirm/refine per-tier as
-     each feature's spec is implemented. -->
-- **Smart Shoe (firmware):** microcontroller-based, FSR pressure-sensor array + IMU, BLE output. Language/RTOS TBD.
-- **Client App:** BLE ingest, on-device filtering/segmentation, sport-profile model inference, insights UI, HTTPS sync. Platform (native mobile / cross-platform) TBD.
-- **Cloud (GCP):** Firebase Auth, Cloud Run (ingest API + session worker), Pub/Sub (session events), Cloud Storage + Firestore (raw sessions, summaries/trends), Vertex AI (model training).
+<!-- Firmware tier is still pre-code/TBD, chosen when its own spec is written. Client + Cloud tiers
+     were decided during /spec-decompose 001 (see specs/memory/decisions.md) so that segmentation/
+     insight logic could be a single shared package instead of two implementations to keep in sync. -->
+- **Smart Shoe (firmware):** microcontroller-based, FSR pressure-sensor array + IMU, BLE output. Language/RTOS TBD — separate hardware spec.
+- **Client App:** React Native + TypeScript. BLE ingest, on-phone filtering/segmentation/inference (via `packages/insights-engine`), insights UI, HTTPS sync.
+- **Cloud (GCP):** Node.js + TypeScript on Cloud Run (Fastify) for the ingest API and session worker; Firebase Auth; Pub/Sub (session events); Cloud Storage + Firestore (raw sessions, summaries/trends); Vertex AI (model training).
+- **Monorepo layout:** npm workspaces — `apps/client` (React Native), `services/ingest-api`,
+  `services/session-worker`, `services/training-pipeline`, `packages/data-contracts` (shared schemas/types), `packages/insights-engine` (shared segmentation + insight computation, sport-profile-driven).
 
 ## Decision Log Pointer
 See `specs/memory/decisions.md` for the running log of significant architectural decisions and their rationale.

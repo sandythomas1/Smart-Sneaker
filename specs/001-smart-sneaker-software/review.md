@@ -1,6 +1,37 @@
 # Review: Spec 001 — Smart Sneaker Software Solution
 
-Verdict: NEEDS REVISION
+Verdict: NEEDS REVISION *(original pass)* → **READY** *(after revision, same session — see
+Resolution below)*
+
+## Resolution
+
+All three blocking findings and all four non-blocking findings were addressed directly in
+`spec.md`/`plan.md` rather than left as follow-up work:
+
+1. **Consistency tolerance/reconciliation** — Req. 17 now states the cloud result is authoritative
+   once available and must agree with the on-phone result within a stated tolerance (proposed
+   default ±10% / majority label on strike type); AC rewritten to test against that tolerance.
+2. **IDOR (session ownership)** — new Req. 16: ingest API derives the owning athlete from the auth
+   token, never a client-supplied field.
+3. **Missing input validation** — new Req. 15: ingest API validates payload shape/size before
+   accepting/queuing, rejecting malformed uploads synchronously.
+4. **"On-device" ambiguity** — spec now uses "on-phone" vs. "on-shoe" consistently, with an explicit
+   terminology note; `plan.md` updated to match.
+5. **No error-state UX** — new Req. 7 (SHOULD): surface sync/processing failures actionably.
+6. **Undefined "brief" BLE tolerance** — Req. 2 now has a proposed default (≤30s), flagged in Open
+   Questions for confirmation like the other numeric placeholders.
+7. **No rate limiting** — new Abuse Prevention NFR (SHOULD), scoped as low-severity at current
+   scale per the original finding.
+
+The remaining `NEEDS CLARIFICATION` items in `spec.md`'s Open Questions (single vs. dual shoe,
+ground-truth method/threshold, sensor placement, first-user cohort, retention/consent, and the
+proposed numeric defaults) are genuine product decisions, not spec defects — the spec already
+surfaces them transparently rather than guessing, which is the correct move at this stage. They
+block `/spec-decompose` from fully sequencing the firmware-dependent catalog items, but they don't
+block the spec's own internal correctness, testability, or security posture, which is what this
+review verdict evaluates.
+
+## Original Findings (pre-revision, kept for record)
 
 ## Findings
 

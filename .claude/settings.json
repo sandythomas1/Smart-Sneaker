@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "PowerShell(npm install 2>&1)",
+      "PowerShell($candidates = @\\(\"$env:ProgramFiles\\\\nodejs\\\\npm.cmd\", \"$env:APPDATA\\\\npm\\\\npm.cmd\", \"$env:LOCALAPPDATA\\\\Volta\\\\bin\\\\npm.exe\", \"$env:USERPROFILE\\\\scoop\\\\shims\\\\npm.cmd\", \"$env:LOCALAPPDATA\\\\fnm_multishells\"\\); foreach \\($c in $candidates\\) { if \\(Test-Path $c\\) { Write-Output \"FOUND: $c\" } }; if \\(Test-Path \"$env:LOCALAPPDATA\\\\nvm\"\\) { Write-Output \"nvm-windows dir exists\" }; Get-ChildItem \"C:\\\\Program Files\\\\nodejs\" -ErrorAction SilentlyContinue | Select-Object -First 3 -ExpandProperty Name)",
+      "PowerShell($env:Path = \"C:\\\\Program Files\\\\nodejs;$env:APPDATA\\\\npm;$env:Path\"; node --version; npm install 2>&1 | Select-Object -Last 4)",
+      "PowerShell($env:Path = \"C:\\\\Program Files\\\\nodejs;$env:Path\"; npm test --workspace=@smart-sneaker/data-contracts 2>&1 | Select-Object -Last 30)",
+      "PowerShell($env:Path = \"C:\\\\Program Files\\\\nodejs;$env:Path\"; npm run typecheck --workspace=@smart-sneaker/data-contracts 2>&1 | Select-Object -Last 5; Write-Output \"typecheck exit: $LASTEXITCODE\")",
+      "PowerShell($env:Path = \"C:\\\\Program Files\\\\nodejs;$env:Path\"; npm install 2>&1 | Select-Object -Last 2; npm test --workspace=@smart-sneaker/insights-engine 2>&1 | Select-Object -Last 25)",
+      "PowerShell($env:Path = \"C:\\\\Program Files\\\\nodejs;$env:Path\"; npm run typecheck --workspaces --if-present 2>&1 | Select-Object -Last 6; Write-Output \"typecheck exit: $LASTEXITCODE\"; npm test 2>&1 | Select-String -Pattern \"Tests:|Test Suites:\")"
+    ]
+  }
+}

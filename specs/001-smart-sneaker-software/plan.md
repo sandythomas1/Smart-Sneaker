@@ -3,18 +3,21 @@
 ## Approach
 
 Build the software solution as three cooperating layers, matching the existing architecture
-diagrams: a **client app** that owns the real-time athlete experience (BLE ingest, on-device
+diagrams: a **client app** that owns the real-time athlete experience (BLE ingest, on-phone
 segmentation + inference, immediate insights, background sync), and a **GCP cloud platform** that
 owns durability, cross-session trends, coach access, and model training — connected by an
 **event-driven pipeline** (ingest → Pub/Sub event → worker → results store) rather than synchronous
 request/response processing, so a slow or failed processing run never blocks the upload path.
 
 Intelligence is deliberately duplicated in a controlled way: the client app runs the sport-profile
-model on-device for a fast, offline-capable insight view, while the cloud worker re-runs the same
+model on-phone for a fast, offline-capable insight view, while the cloud worker re-runs the same
 segmentation + insight logic server-side to produce the canonical, durable result used for trends,
-coach views, and training data. This is the software half of the program's two-stage intelligence
-rollout (`specs/constitution.md` → Architecture Principles); on-device inference *on the shoe
-itself* (no phone) is explicitly Stage D and out of this plan.
+coach views, and training data. The cloud result is authoritative once available and must agree
+with the on-phone result within a defined tolerance (`spec.md` Req. 17, Consistency NFR) — this was
+tightened during `/spec-review` from an implicit assumption into a binding, testable rule. This is
+the software half of the program's two-stage intelligence rollout (`specs/constitution.md` →
+Architecture Principles); on-shoe inference (no phone present) is explicitly Stage D and out of
+this plan.
 
 The **sport-profile abstraction** is the seam that keeps the pipeline sport-agnostic: segmentation,
 feature extraction, and the model to load are all resolved from a profile keyed by sport, so
@@ -25,13 +28,15 @@ when the second sport arrives.
 ## Architecture
 
 **Client App**
-- *BLE Ingest* — discovers/pairs the shoe, receives the packet stream, buffers through brief
-  disconnects, reassembles a time-synced session.
+- *BLE Ingest* — discovers/pairs the shoe, receives the packet stream, buffers through disconnects
+  up to the agreed tolerance (proposed default 30s, `spec.md` Req. 2), reassembles a time-synced
+  session.
 - *Preprocess* — filters noise, segments the stream into gait cycles (shared segmentation logic,
   see below).
 - *Inference* — loads the active sport profile's model, computes the four running insights with a
-  per-insight confidence score.
-- *Insights UI* — displays results immediately, no network dependency.
+  per-insight confidence score, on-phone.
+- *Insights UI* — displays results immediately, no network dependency; surfaces sync/processing
+  failures actionably rather than failing silently (`spec.md` Req. 7).
 - *Sync* — persists the raw session locally, uploads over HTTPS once connectivity allows, retries
   on failure, clears local copy only after server-confirmed receipt.
 
@@ -45,8 +50,10 @@ when the second sport arrives.
 **GCP Cloud Platform**
 - *Firebase Auth* — authenticates athletes and coaches; identity feeds every downstream
   authorization check.
-- *Ingest API (Cloud Run)* — authenticated HTTPS endpoint, writes raw session to storage, emits a
-  session-processing event. Idempotent on session ID.
+- *Ingest API (Cloud Run)* — authenticated HTTPS endpoint; validates payload shape/size before
+  accepting (`spec.md` Req. 15), derives the owning athlete from the auth token rather than a
+  client-supplied field (Req. 16), writes raw session to storage, emits a session-processing event.
+  Idempotent on session ID.
 - *Pub/Sub (session event)* — decouples ingest from processing; absorbs backpressure if the worker
   is slower than upload volume.
 - *Session Worker (Cloud Run job)* — consumes the event, runs segmentation + insights, writes
@@ -88,11 +95,13 @@ when the second sport arrives.
 
 ## Tradeoffs
 
-- **Duplicated intelligence (on-device + cloud) buys responsiveness and offline capability at the
+- **Duplicated intelligence (on-phone + cloud) buys responsiveness and offline capability at the
   cost of a consistency risk**: the client's immediate result and the cloud's canonical result could
   diverge if the two implementations drift. Mitigated by treating "shared segmentation/insight
-  logic" as a named architectural requirement (above), not an implementation detail to improvise
-  later, and by Acceptance Criteria requiring the two to be checked against each other.
+  logic" as a named architectural requirement (above), by a defined numeric consistency tolerance
+  (`spec.md` Consistency NFR) instead of the vaguer "should be consistent," and by making the cloud
+  result authoritative for display once available rather than leaving both results co-equal and
+  ambiguous.
 - **Event-driven cloud pipeline adds infrastructure (Pub/Sub, a separate worker deploy) that a
   monolithic request-handler wouldn't need**, in exchange for resilience: a processing bug or spike
   in load degrades gracefully (event sits in the queue) instead of taking down uploads.
@@ -119,9 +128,15 @@ when the second sport arrives.
 - **Small initial dataset** limits how much the model-training pipeline (catalog #11) can actually
   learn early on; early "trends" may be noisy. Mitigation: the spec already requires raw data
   retention specifically so past sessions can be reprocessed once the model improves.
-- **Consistency drift between on-device and cloud insight computation** (see Tradeoffs) if the two
+- **Consistency drift between on-phone and cloud insight computation** (see Tradeoffs) if the two
   aren't built from shared logic — could quietly ship two different answers to the same question.
-  Mitigation: named as an explicit architectural requirement above, not left implicit.
+  Mitigation: named as an explicit architectural requirement above, backed by a numeric tolerance
+  and an authoritative-source rule, not left implicit.
+- **IDOR / unvalidated-input exposure on the ingest API**, since it's the system's primary
+  externally-reachable boundary and accepts client-constructed payloads. Mitigation: ownership is
+  derived server-side from the auth token (never trusted from the client), and payloads are
+  validated before being queued (`spec.md` Req. 15-16) — both added during `/spec-review` before
+  any code was written against the earlier, looser requirement text.
 - **Privacy/consent exposure**: biomechanics data is personal and potentially re-identifiable across
   sessions. Retention/consent posture is an open question in the spec; shipping accounts-and-access
   control (catalog #12) without that answered risks building the wrong access model. Mitigation:
