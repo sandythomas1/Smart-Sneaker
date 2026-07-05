@@ -14,6 +14,14 @@ describe('InsightResultSchema', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('accepts a per-foot insight (ground contact time per foot)', () => {
+    const result = validateContract(
+      InsightResultSchema,
+      validInsightResult({ kind: 'ground_contact_time', foot: 'left', unit: 'ms' }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it('can express an unreliable insight instead of omitting it (Req. 11)', () => {
     const result = validateContract(
       InsightResultSchema,
@@ -27,6 +35,7 @@ describe('InsightResultSchema', () => {
     ['negative confidence', validInsightResult({ confidence: -0.1 })],
     ['missing confidence', (() => { const i = validInsightResult(); delete (i as Record<string, unknown>).confidence; return i; })()],
     ['missing reliable flag', (() => { const i = validInsightResult(); delete (i as Record<string, unknown>).reliable; return i; })()],
+    ['invalid foot value', validInsightResult({ foot: 'center' })],
     ['empty kind', validInsightResult({ kind: '' })],
     ['empty string value', validInsightResult({ value: '' })],
   ])('rejects %s', (_name, payload) => {

@@ -64,7 +64,7 @@ explicitly rather than silently assuming an answer.
   - Given segmented fixture cycles, computes left/right pressure balance, per-foot ground contact time, cadence, and foot-strike classification (Req. 10).
   - A fixture built to represent one-leg-favoring produces a balance result reflecting that asymmetry (feeds `spec.md`'s asymmetry Acceptance Criterion).
   - An insight derived from a low-confidence segmentation is itself marked low-confidence, not silently reported as reliable (Req. 11).
-- Status: todo
+- Status: done
 
 ## T5: Accounts & access control (auth, roles, sharing relationship)
 - Description: Firebase Auth integration plus the athlete/coach role model and the explicit
@@ -77,7 +77,7 @@ explicitly rather than silently assuming an answer.
   - A coach can be granted (and revoked) a sharing relationship to a specific athlete.
   - A non-shared coach's (or arbitrary other user's) attempt to access an athlete's data is rejected server-side.
   - An unauthenticated request to any protected resource is rejected.
-- Status: todo
+- Status: done
 
 ## T6: Ingest API — authenticated upload, validation, ownership derivation
 - Description: The Cloud Run endpoint that accepts an uploaded session: enforces auth, validates
@@ -92,7 +92,7 @@ explicitly rather than silently assuming an answer.
   - The stored session's owning athlete always comes from the auth token; a payload containing a different client-supplied athlete ID does not change ownership (Req. 16).
   - Re-submitting the same session ID does not create a duplicate stored record (Req. 18, ingest half).
   - Requests from one account are bounded by a basic per-account rate limit (Abuse Prevention NFR, SHOULD).
-- Status: todo
+- Status: done
 
 ## T7: Session processing worker — authoritative result + consistency check
 - Description: The Cloud Run job that consumes the session-processing event, runs T4's
@@ -106,7 +106,7 @@ explicitly rather than silently assuming an answer.
   - Consuming a session-processing event produces a structured, persisted result using the same insights-engine as the client (Req. 17).
   - Redelivering the same event does not duplicate the stored result (Req. 18, worker half).
   - When an on-phone result is present in the uploaded session, a per-insight comparison against the worker's result is recorded; a session outside the Consistency NFR's tolerance is flagged for review rather than silently accepted.
-- Status: todo
+- Status: done
 
 ## T8: Athlete/coach dashboard
 - Description: Web views for an athlete to see a session's insights and their multi-session trend,

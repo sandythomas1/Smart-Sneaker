@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FootSchema } from './sample';
 
 /**
  * Insight kinds for the running profile. `InsightResultSchema.kind` is a free
@@ -20,6 +21,10 @@ export const RUNNING_INSIGHT_KINDS = [
  */
 export const InsightResultSchema = z.object({
   kind: z.string().min(1).max(100),
+  /** Set for per-foot insights (e.g. ground contact time per foot); absent for
+   * whole-body insights (cadence, balance). (kind, foot) identifies an insight
+   * within a set — the worker's consistency comparison keys on it (Req. 17). */
+  foot: FootSchema.optional(),
   /** Numeric metrics (cadence, balance %) or categorical labels (foot-strike type). */
   value: z.union([z.number(), z.string().min(1).max(100)]),
   unit: z.string().min(1).max(30).optional(),

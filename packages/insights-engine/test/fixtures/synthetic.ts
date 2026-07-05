@@ -19,6 +19,11 @@ export interface SyntheticRunOptions {
   rightFootOffsetMs: number;
   /** Windows to delete samples from, simulating BLE dropouts. */
   dropouts?: Array<{ foot: Foot; startMs: number; endMs: number }>;
+  /** Per-foot stance peak pressure override, for asymmetric-loading fixtures. Default: PEAK_PRESSURE both feet. */
+  peakPressureByFoot?: Partial<Record<Foot, number>>;
+  /** Per-foot relative channel weighting (heel→toe order), for strike-type
+   * fixtures — e.g. [4, 2, 1, 1] is heel-biased. Default: uniform. */
+  channelWeightsByFoot?: Partial<Record<Foot, number[]>>;
 }
 
 export interface SyntheticRun {
@@ -50,11 +55,12 @@ export function generateSyntheticRun(options: SyntheticRunOptions): SyntheticRun
   for (let t = 0; t <= options.durationMs; t += options.sampleIntervalMs) {
     for (const foot of ['left', 'right'] as const) {
       if (isDroppedOut(options.dropouts, foot, t)) continue;
-      const total = pressureAt(strikes, foot, t, options.contactMs);
+      const peak = options.peakPressureByFoot?.[foot] ?? PEAK_PRESSURE;
+      const total = pressureAt(strikes, foot, t, options.contactMs, peak);
       samples.push({
         timestampMs: t,
         foot,
-        pressure: new Array(CHANNELS).fill(total / CHANNELS),
+        pressure: distributeAcrossChannels(total, options.channelWeightsByFoot?.[foot]),
         imu: {
           accel: { x: 0, y: 0, z: 9.81 },
           gyro: { x: 0, y: 0, z: 0 },
@@ -89,18 +95,26 @@ function pressureAt(
   foot: Foot,
   t: number,
   contactMs: number,
+  peakPressure: number,
 ): number {
   for (const strike of strikes) {
     if (strike.foot !== foot) continue;
     const elapsed = t - strike.strikeMs;
     if (elapsed < 0 || elapsed > contactMs) continue;
     if (elapsed < RAMP_MS) {
-      return BASELINE_PRESSURE + (PEAK_PRESSURE - BASELINE_PRESSURE) * (elapsed / RAMP_MS);
+      return BASELINE_PRESSURE + (peakPressure - BASELINE_PRESSURE) * (elapsed / RAMP_MS);
     }
     if (elapsed > contactMs - RAMP_MS) {
-      return BASELINE_PRESSURE + (PEAK_PRESSURE - BASELINE_PRESSURE) * ((contactMs - elapsed) / RAMP_MS);
+      return BASELINE_PRESSURE + (peakPressure - BASELINE_PRESSURE) * ((contactMs - elapsed) / RAMP_MS);
     }
-    return PEAK_PRESSURE;
+    return peakPressure;
   }
   return BASELINE_PRESSURE;
+}
+
+/** Split a total across CHANNELS channels by relative weights (uniform when omitted). */
+function distributeAcrossChannels(total: number, weights?: number[]): number[] {
+  const w = weights && weights.length === CHANNELS ? weights : new Array<number>(CHANNELS).fill(1);
+  const weightSum = w.reduce((sum, v) => sum + v, 0);
+  return w.map((v) => (total * v) / weightSum);
 }
