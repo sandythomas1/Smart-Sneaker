@@ -4,6 +4,96 @@ Append-only log of significant technical decisions across specs. Each entry: wha
 
 <!-- New entries go at the top, most recent first -->
 
+## 2026-07-06 — Training pipeline: Cloud Run baseline trainer behind a port, deterministic model versions, IAM-only admin surface (Spec 001 / T13-T14)
+Decision: `services/dataset-store` is a *library* (no server): labeled sessions become queryable
+because ingest now copies `labels` + a `hasLabels` flag into the session record at upload (no
+blob scans); snapshots embed their entries and are written once via atomic create at
+`datasetSnapshots/{name}-v{version}`, so later labeling can only produce the next version.
+`services/training-pipeline` is the only trigger surface (POST /v1/dataset-snapshots,
+POST /v1/training-runs), IAM-gated like the worker (--no-allow-unauthenticated); Cloud Scheduler
+calling the same idempotent endpoint IS the "scheduled" path. Training itself runs in-process: a
+baseline trainer that fits the asymmetry-alert threshold (widest-margin midpoint between labeled
+normal and favoring sessions, default 5% on overlap) and evaluates label-agreement, emitting a
+JSON artifact + metrics. Model identity is deterministic — name
+`{sportProfileId}-baseline-{datasetName}`, version `0.1.0-ds-v{snapshotVersion}` — so re-triggers
+register nothing new (registry `modelVersions/{name}@{version}` via atomic create; artifact
+written before the registry points at it). Contracts for snapshots and model-version records live
+in data-contracts (cross service boundaries).
+Why: the current "model" is a heuristic baseline with one learnable parameter — submitting that to
+Vertex AI custom jobs would be untestable ceremony around nothing; the `TrainingJobRunner` seam is
+the ports themselves, and a Vertex adapter binds behind `runTrainingRun` when a real model exists.
+Personal movement data (the corpus) gets no athlete/coach-facing API at all — least privilege.
+Alternatives considered: Vertex AI CustomJob submission now — rejected as dead, untestable code
+(revisit when model complexity justifies managed training; noted as a deviation from the
+constitution's stack table until then); separate CLI for snapshots — rejected, one IAM-gated
+service beats loose scripts; timestamped model versions — rejected, breaks retrain idempotency.
+
+## 2026-07-06 — Client: sync manager classifies outcomes at the HTTP boundary; calibration is a bounded per-foot gain (Spec 001 / T11-T12)
+Decision: T11 sync splits into an uploader port (owns HTTP + classification: 2xx accepted;
+408/429/5xx/network AND 401/403 transient since tokens are re-fetched per attempt; remaining 4xx
+permanent, surfacing the server's already-user-facing error string) and a `SessionSyncManager`
+(connectivity-triggered drain, exponential backoff in-drain, single shared drain across
+concurrent triggers). A permanently rejected session is excluded from auto-retry but NEVER
+deleted locally; server-confirmed receipt is the only thing that removes a local copy. T12
+calibration: stand-still routine derives per-foot multiplicative pressure gains (each foot scaled
+to the two-foot mean), guarded by stillness (coefficient of variation ≤0.25), duration, both-feet
+and plausibility (scale within 0.25-4×) checks; contract (`CalibrationSchema`) lives in
+data-contracts, correction + uncalibrated-penalty hooks live in the insights engine
+(`applyCalibration`, `calibrationStatus` compute option: uncalibrated = ×0.8 confidence + caveat
+note, reliability re-derived). The on-phone path always declares a status; the worker passes none
+(cloud results stay unadjusted until calibration is part of the upload contract — deferred).
+Why: classification-at-the-boundary keeps retry policy free of HTTP knowledge; deleting
+athlete data on a server rejection is unrecoverable, so rejects park instead; gain-to-mean
+calibration corrects left/right comparability (the balance insight's axis) without pretending to
+produce absolute newtons (spec Non-Goal).
+Alternatives considered: treating 401/403 as permanent — rejected, a refreshed token usually
+heals it; marking sessions "synced" instead of removing — rejected for PoC (Req. 5 only demands
+retention until confirmation; revisit if offline insight history is wanted); per-channel
+calibration — rejected until the firmware fixes sensor placement (open question).
+
+## 2026-07-05 — Client app: platform-agnostic BLE core, placeholder JSON wire format, dedupe-on-replay recorder (Spec 001 / T9-T10)
+Decision: `apps/client` ships T9/T10 as platform-agnostic TypeScript behind BLE ports
+(`BleCentral`/`ShoeConnection`); the native adapter (react-native-ble-plx) binds later, and tests
+run against a `MockShoePeripheral` that buffers on-shoe while disconnected and replays on
+resubscription. Wire format is a documented placeholder (UTF-8 JSON of the T1 `SensorSample`),
+isolated in `packet.ts` as the single seam to swap when the firmware spec fixes the real format.
+The recorder tolerates disconnects ≤30s (spec Req. 2 proposed default) by reconnect-with-backoff
+and dedupes replayed samples on (foot, timestampMs); past tolerance it ends the recording keeping
+all received data (degraded beats lost). On-phone inference (T10) wraps the shared engine and
+degrades to an "unavailable, session saved" state instead of crashing. Screen tests run under
+plain react-test-renderer with `react-native` mapped to a tiny host-component mock — no
+Metro/Babel toolchain in CI. The synthetic-run generator moved into the engine package
+(`src/testing/synthetic.ts`, exported) since engine tests, the mock peripheral, and UI fixtures
+all need the same ground-truth sessions.
+Why: keeps every T9 behavior unit-testable now despite the unwritten firmware spec (tasks.md's
+soft-block instruction); the ports mirror the services' ports-and-adapters pattern.
+Alternatives considered: full RN app scaffold + Metro jest preset — rejected as heavyweight and
+orthogonal to the logic under test; failing the session on any disconnect — rejected, spec
+explicitly demands buffer/resume; inventing a binary wire format now — rejected, would guess the
+firmware contract the spec says not to guess.
+
+## 2026-07-05 — Dashboard: separate web app reading worker results via shared contract; result shape moved to data-contracts (Spec 001 / T8)
+Decision: The dashboard is its own deployable (`apps/dashboard`, Fastify on Cloud Run): an
+authenticated JSON data layer (athlete sessions/session detail/trends, coach roster) plus a
+minimal dependency-free HTML shell that renders only via textContent. It reuses the ingest API's
+auth layer (`resolveIdentity`, `canAccessAthleteData`) by importing `@smart-sneaker/ingest-api`
+rather than duplicating it — extract a `packages/auth` if a third consumer appears. The worker's
+result shape moved to `packages/data-contracts` (`SessionResultSchema`) because worker (writer)
+and dashboard (reader) now share it across a service boundary; the dashboard validates every
+Firestore document against it (list views skip+log invalid docs; detail views fail loudly).
+Results gained `sessionStartedAtMs` so trends order by when sessions happened, not when they were
+processed (backfilled uploads land where they belong). Cross-athlete session detail requests
+return an indistinguishable 404. Sharing grants now duplicate athleteId/coachId into the document
+body so the coach roster is one collection-group query (`listAthleteIdsSharedWith`).
+Why: a separate read-only surface keeps the ingest boundary small; contract-validated reads treat
+the store as a boundary per the constitution; ordering trends by processing time would misplace
+backfilled sessions.
+Alternatives considered: folding the dashboard into the React Native client — rejected, coaches
+are desktop/web users and tasks.md defaulted to a web app; querying raw session records for start
+times — rejected, one contract-validated read beats a cross-service join at PoC scale; a
+React/Next.js frontend — deferred, the acceptance criteria hinge on the server-side data layer,
+and the PoC shell carries no build toolchain.
+
 ## 2026-07-04 — Session worker: push delivery, persisted failures, unreliable insights not compared (Spec 001 / T7)
 Decision: The worker is a Cloud Run service receiving Pub/Sub *push* deliveries at POST
 /pubsub/sessions (caller auth = Cloud Run IAM: --no-allow-unauthenticated + the push

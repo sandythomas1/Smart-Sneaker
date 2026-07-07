@@ -118,7 +118,7 @@ explicitly rather than silently assuming an answer.
   - An athlete sees their session's authoritative (worker-computed) insights and a trend across multiple sessions (Req. 19).
   - A coach sees only athletes who have shared with them (Req. 20).
   - A direct request for a non-shared athlete's data through the dashboard's data layer is rejected server-side, not merely hidden in the UI.
-- Status: todo
+- Status: done
 
 ## T9: Client BLE ingest & session recording
 - Description: Discover/pair with the shoe, receive the BLE packet stream, reconstruct a
@@ -133,7 +133,7 @@ explicitly rather than silently assuming an answer.
   - A full simulated session streams in and reconstructs into a complete, time-ordered `Session` (Req. 1).
   - A simulated disconnect of up to 30s (proposed default, Req. 2) during streaming does not lose or corrupt the session.
   - A recording can be tagged with labels/known conditions (Req. 8).
-- Status: todo
+- Status: done
 
 ## T10: On-phone inference & insights UI
 - Description: Run the shared insights-engine on-phone against a recorded session and display all
@@ -144,7 +144,7 @@ explicitly rather than silently assuming an answer.
 - Acceptance criteria:
   - After a recorded/simulated session completes, all four insights display with confidence indicators, verified with networking mocked/disabled (Req. 4).
   - A deliberately-asymmetric fixture session displays the expected asymmetric balance.
-- Status: todo
+- Status: done
 
 ## T11: Session sync — upload, retry, failure UX
 - Description: Automatically upload a completed session to the ingest API once connectivity
@@ -157,7 +157,7 @@ explicitly rather than silently assuming an answer.
   - The local copy is retained until the server confirms receipt, and is retried on transient failure.
   - A permanently-rejected upload (e.g. fails T6's validation) surfaces an actionable, non-technical message rather than failing silently (Req. 7).
   - Retrying an already-synced session does not create a duplicate server-side record (relies on T6's idempotency).
-- Status: todo
+- Status: done
 
 ## T12: Sensor/user calibration flow
 - Description: A per-user/per-device calibration routine (e.g. stand/sit/walk sequence) that
@@ -169,7 +169,7 @@ explicitly rather than silently assuming an answer.
   - Running the calibration routine produces a stored per-user/per-device correction factor.
   - A session recorded after calibration has that correction applied in its computed insights.
   - A session recorded without calibration is still processed, but flagged as uncalibrated (lower confidence) rather than treated as equivalent (Req. 13, SHOULD).
-- Status: todo
+- Status: done
 
 ## T13: Labeled dataset store & versioning
 - Description: Store labeled sessions (from T9's labeling) as a named, versioned, queryable
@@ -181,7 +181,7 @@ explicitly rather than silently assuming an answer.
   - Labeled sessions are queryable as a named dataset snapshot.
   - Adding new labeled sessions after a snapshot is taken does not mutate that snapshot's contents (immutable versioning).
   - A snapshot records enough metadata (labels, conditions, session references) to reproduce a training run.
-- Status: todo
+- Status: done
 
 ## T14: Model training pipeline (Vertex AI)
 - Description: Triggered/periodic training against a labeled dataset snapshot, producing a
@@ -193,4 +193,4 @@ explicitly rather than silently assuming an answer.
   - A training run consumes a named dataset snapshot and produces a versioned model artifact plus evaluation metrics (Req. 21).
   - The resulting model version is resolvable by T2's sport-profile loader as a candidate reference.
   - A run is triggerable both on a schedule and on-demand.
-- Status: todo
+- Status: done

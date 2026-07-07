@@ -34,6 +34,25 @@ describe('POST /v1/sessions (T6: authenticated upload boundary)', () => {
     ]);
   });
 
+  it('copies labels into the stored record so the dataset store can query them (T13)', async () => {
+    const { app, records } = buildTestHarness(tokens);
+    const labeled = validSessionPayload({
+      labels: { conditions: ['favor-left-leg'], notes: 'protocol run' },
+    });
+    const plain = validSessionPayload({ sessionId: '0f9b2c64-1d3e-4a5b-9c8d-2e1f0a3b4c5e' });
+
+    await app.inject({ method: 'POST', url: '/v1/sessions', headers: auth, payload: labeled });
+    await app.inject({ method: 'POST', url: '/v1/sessions', headers: auth, payload: plain });
+
+    expect(records.records.get(labeled.sessionId)).toMatchObject({
+      hasLabels: true,
+      labels: { conditions: ['favor-left-leg'], notes: 'protocol run' },
+    });
+    const plainRecord = records.records.get(plain.sessionId)!;
+    expect(plainRecord.hasLabels).toBe(false);
+    expect('labels' in plainRecord).toBe(false); // no undefined-valued keys for Firestore
+  });
+
   it('rejects an unauthenticated upload with 401 and stores nothing', async () => {
     const { app, records, events } = buildTestHarness(tokens);
     const response = await app.inject({ method: 'POST', url: '/v1/sessions', payload: validSessionPayload() });

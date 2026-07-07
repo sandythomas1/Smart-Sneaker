@@ -1,6 +1,7 @@
 import type { InsightSet, Session, SportProfile } from '@smart-sneaker/data-contracts';
 import { segmentSession } from '../segmentation';
 import type { SegmentationResult } from '../segmentation/types';
+import { applyUncalibratedPenalty } from '../calibration/apply';
 import {
   computeCadence,
   computeFootStrike,
@@ -44,6 +45,13 @@ export interface ComputeInsightsOptions {
   computedBy: InsightSet['computedBy'];
   /** Injectable clock for deterministic tests. */
   nowMs?: number;
+  /**
+   * Whether the session's sensors were calibrated for this user/device
+   * (Req. 13, T12). 'uncalibrated' still computes every insight but lowers
+   * confidence and attaches a caveat. Omitted = no adjustment, for callers
+   * with no calibration knowledge (the cloud worker, pre-T12 paths).
+   */
+  calibrationStatus?: 'calibrated' | 'uncalibrated';
 }
 
 /**
@@ -68,13 +76,16 @@ export function computeInsightsFromSegmentation(
   segmentation: SegmentationResult,
   options: ComputeInsightsOptions,
 ): InsightSet {
-  const insights = profile.featureSet.flatMap((featureId) => {
+  let insights = profile.featureSet.flatMap((featureId) => {
     const computer = FEATURE_COMPUTERS[featureId];
     if (!computer) {
       throw new FeatureComputerNotFoundError(featureId, Object.keys(FEATURE_COMPUTERS));
     }
     return computer(session, segmentation);
   });
+  if (options.calibrationStatus === 'uncalibrated') {
+    insights = insights.map(applyUncalibratedPenalty);
+  }
 
   return {
     sessionId: session.sessionId,

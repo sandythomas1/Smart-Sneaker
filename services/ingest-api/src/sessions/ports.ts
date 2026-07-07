@@ -1,4 +1,4 @@
-import type { SessionReceivedEvent } from '@smart-sneaker/data-contracts';
+import type { SessionLabels, SessionReceivedEvent } from '@smart-sneaker/data-contracts';
 
 /**
  * Ports for the session ingest pipeline (Req. 14). The route logic depends on
@@ -18,6 +18,12 @@ export interface StoredSessionRecord {
   receivedAtMs: number;
   /** Traces this session across upload → event → worker (Observability NFR). */
   correlationId: string;
+  /** True when the upload carried labels — the queryable flag the labeled
+   * dataset store (T13) filters on, so finding training sessions never means
+   * reading every raw blob. */
+  hasLabels: boolean;
+  /** The labels themselves, copied from the session at ingest (Req. 8). */
+  labels?: SessionLabels;
 }
 
 export type CreateRecordResult =

@@ -45,7 +45,10 @@ export class FirestoreSharingStore implements SharingStore {
   constructor(private readonly db: Firestore) {}
 
   async grant(athleteId: string, coachId: string): Promise<void> {
-    await this.grantDoc(athleteId, coachId).set({ grantedAtMs: Date.now() });
+    // athleteId/coachId are duplicated into the document body so the coach
+    // dashboard can find grants via a collection-group query — document IDs
+    // alone are not filterable across subcollections.
+    await this.grantDoc(athleteId, coachId).set({ athleteId, coachId, grantedAtMs: Date.now() });
   }
 
   async revoke(athleteId: string, coachId: string): Promise<void> {
@@ -54,6 +57,18 @@ export class FirestoreSharingStore implements SharingStore {
 
   async isSharedWith(athleteId: string, coachId: string): Promise<boolean> {
     return (await this.grantDoc(athleteId, coachId).get()).exists;
+  }
+
+  async listAthleteIdsSharedWith(coachId: string): Promise<string[]> {
+    assertPathSafe(coachId, 'coachId');
+    const snapshot = await this.db
+      .collectionGroup(SHARING_GRANTS)
+      .where('coachId', '==', coachId)
+      .get();
+    return snapshot.docs
+      .map((doc) => doc.data().athleteId)
+      .filter((id): id is string => UserIdSchema.safeParse(id).success)
+      .sort();
   }
 
   private grantDoc(athleteId: string, coachId: string) {

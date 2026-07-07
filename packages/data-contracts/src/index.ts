@@ -4,3 +4,7 @@ export * from './sport-profile';
 export * from './insight';
 export * from './validation';
 export * from './event';
+export * from './result';
+export * from './calibration';
+export * from './dataset';
+export * from './model';

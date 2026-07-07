@@ -10,7 +10,7 @@ import {
   RUNNING_PROFILE_ID,
 } from '../src';
 import type { SegmentationResult } from '../src';
-import { generateSyntheticRun, SyntheticRunOptions } from './fixtures/synthetic';
+import { generateSyntheticRun, SyntheticRunOptions } from '../src/testing/synthetic';
 
 const runningProfile = loadSportProfile(RUNNING_PROFILE_ID, defaultSportProfileRegistry);
 

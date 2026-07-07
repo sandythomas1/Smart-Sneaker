@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@smart-sneaker/data-contracts": ["../../packages/data-contracts/src/index.ts"],
+      "@smart-sneaker/ingest-api": ["../../services/ingest-api/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

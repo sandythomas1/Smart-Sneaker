@@ -1,0 +1,24 @@
+{
+  "name": "@smart-sneaker/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Athlete/coach dashboard: authoritative per-session insights, multi-session trends, coach roster — all reads gated server-side by ownership/sharing",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@smart-sneaker/data-contracts": "*",
+    "@smart-sneaker/ingest-api": "*",
+    "fastify": "^5.0.0",
+    "firebase-admin": "^13.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@smart-sneaker/data-contracts": ["../../packages/data-contracts/src/index.ts"],
+      "@smart-sneaker/insights-engine": ["../../packages/insights-engine/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

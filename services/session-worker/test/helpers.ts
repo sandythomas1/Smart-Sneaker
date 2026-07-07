@@ -1,5 +1,5 @@
 import type { Session, SessionReceivedEvent } from '@smart-sneaker/data-contracts';
-import { generateSyntheticRun } from '../../../packages/insights-engine/test/fixtures/synthetic';
+import { generateSyntheticRun } from '@smart-sneaker/insights-engine';
 import { InMemoryAuthoritativeResultStore, InMemorySessionBlobReader } from '../src/in-memory-adapters';
 import { ProcessSessionDeps } from '../src/process-session';
 

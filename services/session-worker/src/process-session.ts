@@ -117,6 +117,8 @@ export async function processSessionEvent(
     insights,
     flaggedForReview: false,
     processedAtMs: nowMs(),
+    // Trend views order by when the session happened, not when it was processed.
+    sessionStartedAtMs: session.startedAtMs,
   };
 
   if (session.onPhoneInsights) {

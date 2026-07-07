@@ -23,6 +23,8 @@ export interface SharingStore {
   grant(athleteId: string, coachId: string): Promise<void>;
   revoke(athleteId: string, coachId: string): Promise<void>;
   isSharedWith(athleteId: string, coachId: string): Promise<boolean>;
+  /** Athletes who currently share with this coach — the coach dashboard's roster (Req. 20). */
+  listAthleteIdsSharedWith(coachId: string): Promise<string[]>;
 }
 
 /**

@@ -7,7 +7,7 @@ import {
   segmentByPeakDetection,
   segmentSession,
 } from '../src';
-import { generateSyntheticRun } from './fixtures/synthetic';
+import { generateSyntheticRun } from '../src/testing/synthetic';
 
 /** Detected strike must land within 2.5 samples of ground truth at 100 Hz. */
 const STRIKE_TOLERANCE_MS = 25;

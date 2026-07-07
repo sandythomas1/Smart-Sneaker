@@ -4,6 +4,10 @@ import type { Foot, SensorSample, Session } from '@smart-sneaker/data-contracts'
  * Synthetic running-session generator with known ground truth. Pressure is a
  * trapezoid per stance: fast 20ms ramp up to peak, plateau, fast 20ms ramp
  * down — so detected strike/toe-off should land within ~1-2 samples of truth.
+ *
+ * Test support, exported deliberately: the engine's own tests, the client
+ * app's mock BLE peripheral (T9), and the insights-UI fixtures (T10) all need
+ * the same ground-truth sessions. It has no production callers.
  */
 
 export interface SyntheticRunOptions {

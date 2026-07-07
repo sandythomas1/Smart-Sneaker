@@ -70,6 +70,9 @@ export function registerSessionRoutes(app: FastifyInstance, deps: SessionRouteDe
       blobPath: rawSessionBlobPath(identity.userId, session.sessionId),
       receivedAtMs: nowMs(),
       correlationId: randomUUID(),
+      hasLabels: session.labels !== undefined,
+      // No undefined-valued keys: Firestore rejects them on create().
+      ...(session.labels !== undefined ? { labels: session.labels } : {}),
     };
 
     // Blob first: a record only ever points at a blob that exists (Req. 22).
