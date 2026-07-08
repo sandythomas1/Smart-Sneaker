@@ -1,0 +1,29 @@
+{
+  "name": "@smart-sneaker/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Seed-data generation and full-pipeline software e2e tests — ingest → worker → dashboard → dataset → training, all on in-memory adapters (no cloud).",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "seed": "ts-node -r tsconfig-paths/register --transpile-only src/write-seed.ts"
+  },
+  "dependencies": {
+    "@smart-sneaker/dashboard": "*",
+    "@smart-sneaker/data-contracts": "*",
+    "@smart-sneaker/dataset-store": "*",
+    "@smart-sneaker/ingest-api": "*",
+    "@smart-sneaker/insights-engine": "*",
+    "@smart-sneaker/session-worker": "*",
+    "@smart-sneaker/training-pipeline": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.2.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.0"
+  }
+}

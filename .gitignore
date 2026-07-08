@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# Generated seed fixtures — regenerate with: npm run seed --workspace @smart-sneaker/e2e
+tools/e2e/seed/
 coverage/
 *.log
 .env
