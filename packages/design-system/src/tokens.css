@@ -1,0 +1,129 @@
+/*
+ * Smart Sneaker design tokens — dark athletic theme.
+ * Data-series colors (left/right foot) are validated for the dark surface
+ * (lightness band, chroma, CVD separation, 3:1 contrast); left/right is never
+ * encoded by color alone — components pair it with an L/R label.
+ */
+:root {
+  /* Surfaces */
+  --ss-bg: #0c0e12;
+  --ss-surface: #161b22;
+  --ss-surface-raised: #1e2530;
+  --ss-border: #2a3342;
+
+  /* Ink */
+  --ss-text: #f2f5f8;
+  --ss-text-muted: #9aa7b8;
+  --ss-text-on-accent: #0c0e12;
+
+  /* Brand accent (UI only — never a data series) */
+  --ss-accent: #c6f135;
+
+  /* Data series: per-foot categorical pair (validated, dark mode) */
+  --ss-foot-left: #3987e5;
+  --ss-foot-right: #d95926;
+
+  /* Status (reserved — always shipped with icon + label, never color alone) */
+  --ss-status-good: #4ade80;
+  --ss-status-warn: #ffc53d;
+  --ss-status-bad: #ff6b6b;
+  --ss-status-info: #7dd3fc;
+
+  /* Type scale */
+  --ss-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ss-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --ss-text-xs: 0.75rem;
+  --ss-text-sm: 0.875rem;
+  --ss-text-md: 1rem;
+  --ss-text-lg: 1.25rem;
+  --ss-text-xl: 2rem;
+  --ss-text-hero: 3rem;
+
+  /* Spacing (4px scale) & radii */
+  --ss-space-1: 4px;
+  --ss-space-2: 8px;
+  --ss-space-3: 12px;
+  --ss-space-4: 16px;
+  --ss-space-6: 24px;
+  --ss-space-8: 32px;
+  --ss-radius-sm: 8px;
+  --ss-radius-md: 12px;
+  --ss-radius-pill: 999px;
+}
+
+body.ss-app {
+  background: var(--ss-bg);
+  color: var(--ss-text);
+  font-family: var(--ss-font);
+  margin: 0;
+}
+
+/* Buttons */
+.ss-btn {
+  font: 600 var(--ss-text-md) var(--ss-font);
+  border-radius: var(--ss-radius-md);
+  padding: var(--ss-space-3) var(--ss-space-6);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.ss-btn--primary { background: var(--ss-accent); color: var(--ss-text-on-accent); }
+.ss-btn--secondary { background: var(--ss-surface-raised); color: var(--ss-text); border-color: var(--ss-border); }
+.ss-btn--ghost { background: transparent; color: var(--ss-text-muted); }
+.ss-btn--danger { background: var(--ss-status-bad); color: var(--ss-text-on-accent); }
+
+/* Status chips (icon glyph + label — never color alone) */
+.ss-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ss-space-1);
+  font: 600 var(--ss-text-xs) var(--ss-font);
+  border-radius: var(--ss-radius-pill);
+  padding: 2px var(--ss-space-2);
+  border: 1px solid var(--ss-border);
+  background: var(--ss-surface-raised);
+  color: var(--ss-text);
+}
+.ss-chip--good { border-color: var(--ss-status-good); }
+.ss-chip--warn { border-color: var(--ss-status-warn); }
+.ss-chip--bad { border-color: var(--ss-status-bad); }
+.ss-chip--info { border-color: var(--ss-status-info); }
+
+/* Insight card */
+.ss-card {
+  background: var(--ss-surface);
+  border: 1px solid var(--ss-border);
+  border-radius: var(--ss-radius-md);
+  padding: var(--ss-space-4);
+}
+.ss-card__kind {
+  font: 600 var(--ss-text-xs) var(--ss-font);
+  color: var(--ss-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 var(--ss-space-2);
+}
+.ss-card__value {
+  font: 700 var(--ss-text-xl) var(--ss-font);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.ss-card__unit { font-size: var(--ss-text-md); color: var(--ss-text-muted); font-weight: 600; }
+.ss-card__takeaway { font-size: var(--ss-text-sm); color: var(--ss-text-muted); margin: var(--ss-space-2) 0 0; }
+.ss-card--unreliable .ss-card__value { color: var(--ss-text-muted); text-decoration: line-through; }
+
+/* Left/right split bar (2px surface gap between fills; labels carry identity) */
+.ss-split { display: flex; gap: 2px; height: 12px; border-radius: var(--ss-radius-sm); overflow: hidden; margin-top: var(--ss-space-3); }
+.ss-split__left { background: var(--ss-foot-left); }
+.ss-split__right { background: var(--ss-foot-right); }
+.ss-split-labels { display: flex; justify-content: space-between; font: 600 var(--ss-text-xs) var(--ss-font); color: var(--ss-text-muted); margin-top: var(--ss-space-1); }
+
+/* Demo badge */
+.ss-demo-badge {
+  display: inline-block;
+  font: 700 var(--ss-text-xs) var(--ss-font);
+  letter-spacing: 0.1em;
+  color: var(--ss-text-on-accent);
+  background: var(--ss-accent);
+  border-radius: var(--ss-radius-pill);
+  padding: 2px var(--ss-space-2);
+}
