@@ -12,5 +12,6 @@ module.exports = {
     '^@smart-sneaker/dataset-store$': '<rootDir>/../../services/dataset-store/src/index.ts',
     '^@smart-sneaker/training-pipeline$': '<rootDir>/../../services/training-pipeline/src/index.ts',
     '^@smart-sneaker/dashboard$': '<rootDir>/../../apps/dashboard/src/index.ts',
+    '^@smart-sneaker/design-system$': '<rootDir>/../../packages/design-system/src/index.ts',
   },
 };

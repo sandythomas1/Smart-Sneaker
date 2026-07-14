@@ -7,7 +7,6 @@ import {
   InMemorySessionRecordStore,
   InMemorySharingStore,
   InMemoryUserDirectory,
-  TokenVerifier,
 } from '@smart-sneaker/ingest-api';
 import {
   InMemoryAuthoritativeResultStore,
@@ -34,17 +33,7 @@ import {
   COACH_DANA,
   SeedCorpus,
 } from '../src/seed';
-
-/** Maps the seed roster's literal bearer tokens to uids — a stand-in for Firebase verification. */
-class SeedTokenVerifier implements TokenVerifier {
-  constructor(private readonly tokens: Record<string, string>) {}
-
-  async verifyIdToken(idToken: string): Promise<{ uid: string }> {
-    const uid = this.tokens[idToken];
-    if (!uid) throw new Error('token rejected by verifier');
-    return { uid };
-  }
-}
+import { SeedTokenVerifier } from '../src/harness';
 
 /**
  * Full-pipeline software e2e on the seed corpus, using only in-memory
@@ -264,7 +253,8 @@ describe('seeded end-to-end pipeline', () => {
       });
       expect(response.statusCode).toBe(200);
       const { sessions } = response.json();
-      expect(sessions).toHaveLength(3);
+      const ashaSessionCount = corpus.sessions.filter((s) => s.ownerUserId === ATHLETE_ASHA).length;
+      expect(sessions).toHaveLength(ashaSessionCount);
       const startTimes = sessions.map((s: { sessionStartedAtMs: number }) => s.sessionStartedAtMs);
       expect(startTimes).toEqual([...startTimes].sort((a, b) => b - a));
     });

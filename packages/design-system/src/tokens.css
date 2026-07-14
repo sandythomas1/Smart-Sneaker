@@ -117,6 +117,17 @@ body.ss-app {
 .ss-split__right { background: var(--ss-foot-right); }
 .ss-split-labels { display: flex; justify-content: space-between; font: 600 var(--ss-text-xs) var(--ss-font); color: var(--ss-text-muted); margin-top: var(--ss-space-1); }
 
+/* Line chart (single accent series; unreliable points are hollow — shape, not color) */
+.ss-chart { width: 100%; height: auto; display: block; }
+.ss-chart__band { fill: var(--ss-accent); opacity: 0.08; }
+.ss-chart__grid { stroke: var(--ss-border); stroke-width: 1; }
+.ss-chart__tick { fill: var(--ss-text-muted); font: 500 10px var(--ss-font-mono); }
+.ss-chart__line { stroke: var(--ss-accent); stroke-width: 2; fill: none; stroke-linejoin: round; }
+.ss-chart__point { fill: var(--ss-accent); }
+.ss-chart__point--unreliable { fill: var(--ss-bg); stroke: var(--ss-accent); stroke-width: 1.5; }
+.ss-chart__point--latest { stroke: var(--ss-text); stroke-width: 1.5; }
+.ss-chart__value { fill: var(--ss-text); font: 700 12px var(--ss-font); }
+
 /* Demo badge */
 .ss-demo-badge {
   display: inline-block;

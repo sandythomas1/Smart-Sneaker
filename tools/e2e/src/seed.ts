@@ -40,6 +40,9 @@ export interface SeedSession {
   /** Whether the worker should flag this session for human review. */
   expectFlaggedForReview: boolean;
   session: Session;
+  /** The exact synthetic-run options that produced `session` — the demo's
+   * capture view replays these, so what it "records" IS seeded data. */
+  runOptions: SyntheticRunOptions;
 }
 
 export interface SeedCorpus {
@@ -53,6 +56,8 @@ export interface SeedCorpus {
 export const ATHLETE_ASHA = 'athlete-asha';
 export const ATHLETE_BEN = 'athlete-ben';
 export const ATHLETE_CHIKE = 'athlete-chike';
+/** Athlete with zero sessions — the empty-state fixture (spec 002 Req. 7d). */
+export const ATHLETE_MIRA = 'athlete-mira';
 export const COACH_DANA = 'coach-dana';
 
 /** 2026-06-01T08:00:00Z — an arbitrary but fixed "training week" anchor. */
@@ -83,7 +88,7 @@ interface BuildOptions {
   onPhone?: 'matching' | 'divergent';
 }
 
-function buildSession(options: BuildOptions): Session {
+function buildSession(options: BuildOptions): { session: Session; runOptions: SyntheticRunOptions } {
   const runOptions: SyntheticRunOptions = { ...BASE_RUN, ...options.run };
   const { session: generated } = generateSyntheticRun(runOptions);
 
@@ -117,7 +122,7 @@ function buildSession(options: BuildOptions): Session {
     const detail = validation.issues.map((i) => `${i.path}: ${i.message}`).join('; ');
     throw new Error(`seed session ${options.idIndex} failed contract validation — ${detail}`);
   }
-  return validation.data;
+  return { session: validation.data, runOptions };
 }
 
 /** A tiny raw payload with samples out of timestamp order — must be rejected at ingest, never queued. */
@@ -144,11 +149,54 @@ function buildInvalidSession(): unknown {
   };
 }
 
+/**
+ * Six weeks of Asha training for the trends view (spec 002 Req. 3): cadence
+ * quickens (stride interval shrinks) and loading drifts toward the left foot
+ * session by session, so the longitudinal story is visible, not noise.
+ */
+const TREND_RUNS: ReadonlyArray<{ strideIntervalMs: number; leftPeak: number }> = [
+  { strideIntervalMs: 726, leftPeak: 8.0 },
+  { strideIntervalMs: 720, leftPeak: 8.15 },
+  { strideIntervalMs: 714, leftPeak: 8.3 },
+  { strideIntervalMs: 708, leftPeak: 8.45 },
+  { strideIntervalMs: 702, leftPeak: 8.6 },
+  { strideIntervalMs: 698, leftPeak: 8.75 },
+  { strideIntervalMs: 692, leftPeak: 8.9 },
+  { strideIntervalMs: 688, leftPeak: 9.05 },
+  { strideIntervalMs: 682, leftPeak: 9.2 },
+];
+
+/**
+ * Dropout windows for the low-confidence fixture (spec 002 Req. 7b): a 120ms
+ * mid-stance capture gap on two of every three left-foot stances drags the
+ * left-foot cycles' mean confidence (⅔ × 0.4 + ⅓ × 0.9 ≈ 0.57) under the
+ * engine's 0.6 reliability bar, while one gap per four right-foot stances
+ * leaves right-side insights reliable but visibly below high confidence.
+ */
+function buildNoisyDropouts(
+  options: SyntheticRunOptions,
+): NonNullable<SyntheticRunOptions['dropouts']> {
+  const dropouts: NonNullable<SyntheticRunOptions['dropouts']> = [];
+  for (const foot of ['left', 'right'] as const) {
+    const offset = foot === 'left' ? 0 : options.rightFootOffsetMs;
+    const hit = (i: number): boolean => (foot === 'left' ? i % 3 !== 0 : i % 4 === 0);
+    for (
+      let i = 0, strikeMs = offset;
+      strikeMs + options.contactMs <= options.durationMs;
+      i += 1, strikeMs += options.strideIntervalMs
+    ) {
+      if (hit(i)) dropouts.push({ foot, startMs: strikeMs + 60, endMs: strikeMs + 180 });
+    }
+  }
+  return dropouts;
+}
+
 export function buildSeedCorpus(): SeedCorpus {
   const users: SeedUser[] = [
     { userId: ATHLETE_ASHA, role: 'athlete', token: 'seed-token-asha' },
     { userId: ATHLETE_BEN, role: 'athlete', token: 'seed-token-ben' },
     { userId: ATHLETE_CHIKE, role: 'athlete', token: 'seed-token-chike' },
+    { userId: ATHLETE_MIRA, role: 'athlete', token: 'seed-token-mira' },
     { userId: COACH_DANA, role: 'coach', token: 'seed-token-dana' },
   ];
 
@@ -164,7 +212,7 @@ export function buildSeedCorpus(): SeedCorpus {
       description:
         'Clean 60s run with a matching on-phone result — processes cleanly, consistency within tolerance.',
       expectFlaggedForReview: false,
-      session: buildSession({
+      ...buildSession({
         idIndex: 1,
         startedAtMs: SEED_EPOCH_MS,
         run: { durationMs: 60_000 },
@@ -176,7 +224,7 @@ export function buildSeedCorpus(): SeedCorpus {
       ownerUserId: ATHLETE_ASHA,
       description: 'Labeled "normal" protocol session — part of the labeled training corpus.',
       expectFlaggedForReview: false,
-      session: buildSession({
+      ...buildSession({
         idIndex: 2,
         startedAtMs: SEED_EPOCH_MS + 1 * DAY_MS,
         labels: { conditions: ['normal'], notes: 'Even loading, steady pace protocol run.' },
@@ -188,7 +236,7 @@ export function buildSeedCorpus(): SeedCorpus {
       description:
         'Labeled asymmetric session deliberately loading the left foot — trains the asymmetry threshold.',
       expectFlaggedForReview: false,
-      session: buildSession({
+      ...buildSession({
         idIndex: 3,
         startedAtMs: SEED_EPOCH_MS + 2 * DAY_MS,
         run: { peakPressureByFoot: { left: 10, right: 6 } },
@@ -200,7 +248,7 @@ export function buildSeedCorpus(): SeedCorpus {
       ownerUserId: ATHLETE_BEN,
       description: 'Run with a 2s right-foot BLE dropout mid-capture — still processes.',
       expectFlaggedForReview: false,
-      session: buildSession({
+      ...buildSession({
         idIndex: 4,
         startedAtMs: SEED_EPOCH_MS,
         run: {
@@ -215,7 +263,7 @@ export function buildSeedCorpus(): SeedCorpus {
       description:
         'Labeled asymmetric session deliberately loading the right foot — the corpus covers both directions.',
       expectFlaggedForReview: false,
-      session: buildSession({
+      ...buildSession({
         idIndex: 5,
         startedAtMs: SEED_EPOCH_MS + 1 * DAY_MS,
         run: { peakPressureByFoot: { left: 6, right: 10 } },
@@ -228,7 +276,7 @@ export function buildSeedCorpus(): SeedCorpus {
       description:
         'On-phone cadence tampered +30% — the worker must flag the consistency mismatch for review.',
       expectFlaggedForReview: true,
-      session: buildSession({
+      ...buildSession({
         idIndex: 6,
         startedAtMs: SEED_EPOCH_MS + 2 * DAY_MS,
         onPhone: 'divergent',
@@ -239,7 +287,65 @@ export function buildSeedCorpus(): SeedCorpus {
       ownerUserId: ATHLETE_CHIKE,
       description: 'Run owned by an athlete who shares with no coach — the access-control probe.',
       expectFlaggedForReview: false,
-      session: buildSession({ idIndex: 7, startedAtMs: SEED_EPOCH_MS }),
+      ...buildSession({ idIndex: 7, startedAtMs: SEED_EPOCH_MS }),
+    },
+    ...TREND_RUNS.map((run, i) => ({
+      slug: `asha-trend-${i + 1}`,
+      ownerUserId: ATHLETE_ASHA,
+      description:
+        'Part of a six-week training series with drifting cadence and left-side loading — the trends-view corpus.',
+      expectFlaggedForReview: false,
+      ...buildSession({
+        idIndex: 10 + i,
+        startedAtMs: SEED_EPOCH_MS + (4 + i * 4) * DAY_MS,
+        run: {
+          strideIntervalMs: run.strideIntervalMs,
+          peakPressureByFoot: { left: run.leftPeak, right: 8 },
+        },
+      }),
+    })),
+    {
+      slug: 'asha-noisy-run',
+      ownerUserId: ATHLETE_ASHA,
+      description:
+        'Run riddled with mid-stance capture gaps: left-foot insights fall below the reliability bar, the rest stay reliable but below high confidence — the low-confidence/unreliable fixture.',
+      expectFlaggedForReview: false,
+      ...buildSession({
+        idIndex: 19,
+        startedAtMs: SEED_EPOCH_MS + 40 * DAY_MS,
+        run: {
+          durationMs: 60_000,
+          dropouts: buildNoisyDropouts({ ...BASE_RUN, durationMs: 60_000 }),
+        },
+      }),
+    },
+    {
+      slug: 'asha-phone-only-run',
+      ownerUserId: ATHLETE_ASHA,
+      description:
+        'Run carrying an on-phone result; the demo presents it as not-yet-uploaded ("on phone only") while the e2e uploads it normally.',
+      expectFlaggedForReview: false,
+      ...buildSession({
+        idIndex: 20,
+        startedAtMs: SEED_EPOCH_MS + 41 * DAY_MS,
+        onPhone: 'matching',
+      }),
+    },
+    {
+      slug: 'asha-cooldown-run',
+      ownerUserId: ATHLETE_ASHA,
+      description:
+        'Ordinary run the demo generator withholds from the worker stage to show the "Processing…" state; the e2e processes it normally.',
+      expectFlaggedForReview: false,
+      ...buildSession({ idIndex: 21, startedAtMs: SEED_EPOCH_MS + 43 * DAY_MS }),
+    },
+    {
+      slug: 'asha-corrupted-blob',
+      ownerUserId: ATHLETE_ASHA,
+      description:
+        'Ordinary run whose stored blob the demo generator corrupts after upload, exercising the worker\'s persisted failed-validation path; the e2e processes it normally.',
+      expectFlaggedForReview: false,
+      ...buildSession({ idIndex: 22, startedAtMs: SEED_EPOCH_MS + 42 * DAY_MS }),
     },
   ];
 

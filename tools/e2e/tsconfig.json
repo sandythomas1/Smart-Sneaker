@@ -4,14 +4,35 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@smart-sneaker/data-contracts": ["../../packages/data-contracts/src/index.ts"],
-      "@smart-sneaker/insights-engine": ["../../packages/insights-engine/src/index.ts"],
-      "@smart-sneaker/ingest-api": ["../../services/ingest-api/src/index.ts"],
-      "@smart-sneaker/session-worker": ["../../services/session-worker/src/index.ts"],
-      "@smart-sneaker/dataset-store": ["../../services/dataset-store/src/index.ts"],
-      "@smart-sneaker/training-pipeline": ["../../services/training-pipeline/src/index.ts"],
-      "@smart-sneaker/dashboard": ["../../apps/dashboard/src/index.ts"]
-    }
+      "@smart-sneaker/data-contracts": [
+        "../../packages/data-contracts/src/index.ts"
+      ],
+      "@smart-sneaker/insights-engine": [
+        "../../packages/insights-engine/src/index.ts"
+      ],
+      "@smart-sneaker/ingest-api": [
+        "../../services/ingest-api/src/index.ts"
+      ],
+      "@smart-sneaker/session-worker": [
+        "../../services/session-worker/src/index.ts"
+      ],
+      "@smart-sneaker/dataset-store": [
+        "../../services/dataset-store/src/index.ts"
+      ],
+      "@smart-sneaker/training-pipeline": [
+        "../../services/training-pipeline/src/index.ts"
+      ],
+      "@smart-sneaker/dashboard": [
+        "../../apps/dashboard/src/index.ts"
+      ],
+      "@smart-sneaker/design-system": [
+        "../../packages/design-system/src/index.ts"
+      ]
+    },
+    "jsx": "react-jsx"
   },
-  "include": ["src", "test"]
+  "include": [
+    "src",
+    "test"
+  ]
 }

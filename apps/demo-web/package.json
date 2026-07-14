@@ -1,0 +1,37 @@
+{
+  "name": "@smart-sneaker/demo-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-contained demo/mock frontend (spec 002): static React SPA rendering pipeline-produced seed data — session list, insights, trends, capture simulation, coach view, pipeline status.",
+  "scripts": {
+    "predev": "npm --prefix ../../tools/e2e run demo-data",
+    "dev": "vite",
+    "prebuild": "npm --prefix ../../tools/e2e run demo-data",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@smart-sneaker/data-contracts": "*",
+    "@smart-sneaker/design-system": "*",
+    "@smart-sneaker/insights-engine": "*",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "jest": "^30.0.0",
+    "jest-environment-jsdom": "^30.0.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.3.0"
+  }
+}

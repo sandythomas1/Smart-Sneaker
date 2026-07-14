@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "declaration": false,
+    "sourceMap": false,
+    "types": ["vite/client", "jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@smart-sneaker/data-contracts": ["../../packages/data-contracts/src/index.ts"],
+      "@smart-sneaker/insights-engine": ["../../packages/insights-engine/src/index.ts"],
+      "@smart-sneaker/design-system": ["../../packages/design-system/src/index.ts"]
+    }
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}

@@ -15,3 +15,5 @@ export {
   type ButtonVariant,
   type SessionStatus,
 } from './components';
+export { LineChart, type LineChartPoint, type LineChartProps } from './charts';
+export { linearScale, niceTicks, typicalRange } from './chart-math';
